@@ -32,6 +32,7 @@ export interface GameState {
   whitePlayer: Player | null;
   winner: 'black' | 'white' | null;
   moveHistory: { row: number; col: number; color: 'black' | 'white' }[];
+  turnStartTime: number | null; // 서버 타이머 동기화용
 }
 
 export interface RoomInfo {

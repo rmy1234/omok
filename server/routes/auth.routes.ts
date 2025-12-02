@@ -77,9 +77,30 @@ router.post('/login', async (req: Request, res: Response) => {
       return;
     }
 
-    res.json({ success: true, user: userRepository.toPublic(user) });
+    // 전적 정보도 함께 반환
+    const stats = userRepository.getStats(user.id);
+    res.json({ success: true, user: userRepository.toPublic(user), stats });
   } catch (error) {
     console.error('로그인 오류:', error);
+    res.status(500).json({ success: false, error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// 전적 조회
+router.get('/stats/:nickname', async (req: Request, res: Response) => {
+  try {
+    const { nickname } = req.params;
+    
+    const stats = userRepository.getStatsByNickname(nickname);
+    
+    if (!stats) {
+      res.status(404).json({ success: false, error: '사용자를 찾을 수 없습니다.' });
+      return;
+    }
+
+    res.json({ success: true, stats });
+  } catch (error) {
+    console.error('전적 조회 오류:', error);
     res.status(500).json({ success: false, error: '서버 오류가 발생했습니다.' });
   }
 });

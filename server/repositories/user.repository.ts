@@ -6,6 +6,9 @@ export interface User {
   username: string;
   nickname: string;
   password_hash: string;
+  wins: number;
+  draws: number;
+  losses: number;
   created_at: string;
 }
 
@@ -14,6 +17,14 @@ export interface UserPublic {
   username: string;
   nickname: string;
   createdAt: string;
+}
+
+export interface GameStats {
+  wins: number;
+  draws: number;
+  losses: number;
+  totalGames: number;
+  winRate: number;
 }
 
 class UserRepository {
@@ -71,6 +82,55 @@ class UserRepository {
       nickname: user.nickname,
       createdAt: user.created_at,
     };
+  }
+
+  // 전적 조회
+  getStats(userId: number): GameStats {
+    const db = getDatabase();
+    const user = db.prepare('SELECT wins, draws, losses FROM users WHERE id = ?').get(userId) as { wins: number; draws: number; losses: number } | undefined;
+    
+    if (!user) {
+      return { wins: 0, draws: 0, losses: 0, totalGames: 0, winRate: 0 };
+    }
+
+    const totalGames = user.wins + user.draws + user.losses;
+    const winRate = totalGames > 0 ? Math.round((user.wins / totalGames) * 100) : 0;
+
+    return {
+      wins: user.wins,
+      draws: user.draws,
+      losses: user.losses,
+      totalGames,
+      winRate,
+    };
+  }
+
+  // 닉네임으로 전적 조회
+  getStatsByNickname(nickname: string): GameStats | null {
+    const user = this.findByNickname(nickname);
+    if (!user) return null;
+    return this.getStats(user.id);
+  }
+
+  // 승리 기록
+  recordWinByNickname(nickname: string): boolean {
+    const db = getDatabase();
+    const result = db.prepare('UPDATE users SET wins = wins + 1 WHERE nickname = ?').run(nickname);
+    return result.changes > 0;
+  }
+
+  // 패배 기록
+  recordLossByNickname(nickname: string): boolean {
+    const db = getDatabase();
+    const result = db.prepare('UPDATE users SET losses = losses + 1 WHERE nickname = ?').run(nickname);
+    return result.changes > 0;
+  }
+
+  // 무승부 기록
+  recordDrawByNickname(nickname: string): boolean {
+    const db = getDatabase();
+    const result = db.prepare('UPDATE users SET draws = draws + 1 WHERE nickname = ?').run(nickname);
+    return result.changes > 0;
   }
 }
 

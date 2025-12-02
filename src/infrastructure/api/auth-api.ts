@@ -8,9 +8,18 @@ const getApiUrl = () => {
 
 const API_URL = getApiUrl();
 
+export interface GameStats {
+  wins: number;
+  draws: number;
+  losses: number;
+  totalGames: number;
+  winRate: number;
+}
+
 export interface AuthResponse {
   success: boolean;
   user?: UserPublic;
+  stats?: GameStats;
   error?: string;
 }
 
@@ -48,6 +57,16 @@ export async function login(
       body: JSON.stringify({ username, password }),
     });
 
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return { success: false, error: '서버에 연결할 수 없습니다.' };
+  }
+}
+
+export async function getStats(nickname: string): Promise<{ success: boolean; stats?: GameStats; error?: string }> {
+  try {
+    const response = await fetch(`${API_URL}/stats/${encodeURIComponent(nickname)}`);
     const data = await response.json();
     return data;
   } catch (error) {

@@ -27,6 +27,7 @@ export function ChatBox({ roomId, currentUserNickname }: ChatBoxProps) {
   const [isInitialized, setIsInitialized] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
 
@@ -86,13 +87,32 @@ export function ChatBox({ roomId, currentUserNickname }: ChatBoxProps) {
   }, [minimizedPosition]);
 
   // 메시지 목록 자동 스크롤
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (smooth: boolean = true) => {
+    if (messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      container.scrollTop = container.scrollHeight;
+    } else {
+      // fallback: messagesEndRef 사용
+      messagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
+    }
   };
 
+  // 메시지가 추가되면 스크롤
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (!isMinimized) {
+      scrollToBottom();
+    }
+  }, [messages, isMinimized]);
+
+  // 채팅창이 열릴 때(최소화에서 복원될 때) 스크롤을 맨 아래로
+  useEffect(() => {
+    if (!isMinimized) {
+      // 약간의 지연을 주어 DOM이 완전히 렌더링된 후 스크롤
+      setTimeout(() => {
+        scrollToBottom(false); // 즉시 스크롤 (애니메이션 없이)
+      }, 50);
+    }
+  }, [isMinimized]);
 
   useEffect(() => {
     const socket = socketClient.getSocket();
@@ -299,7 +319,7 @@ export function ChatBox({ roomId, currentUserNickname }: ChatBoxProps) {
         </div>
       </div>
 
-      <div className="chat-messages">
+      <div className="chat-messages" ref={messagesContainerRef}>
         <AnimatePresence initial={false}>
           {messages.length === 0 ? (
             <div className="chat-empty">

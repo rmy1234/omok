@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { socketClient, type RoomInfo } from '../../infrastructure/socket/socket-client';
 import { useUserStore } from '../../infrastructure/state/user-store';
+import { getStats } from '../../infrastructure/api/auth-api';
 import '../styles/Lobby.css';
 
 interface LobbyPageProps {
@@ -14,7 +15,18 @@ export function LobbyPage({ onNavigate, onJoinRoom }: LobbyPageProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [roomName, setRoomName] = useState('');
   const [isConnected, setIsConnected] = useState(false);
-  const { currentUser } = useUserStore();
+  const { currentUser, isGuest, stats, setStats } = useUserStore();
+
+  // 전적 정보 새로고침
+  useEffect(() => {
+    if (currentUser && !isGuest) {
+      getStats(currentUser.nickname).then((result) => {
+        if (result.success && result.stats) {
+          setStats(result.stats);
+        }
+      });
+    }
+  }, [currentUser, isGuest, setStats]);
 
   useEffect(() => {
     // 소켓 연결
@@ -140,6 +152,37 @@ export function LobbyPage({ onNavigate, onJoinRoom }: LobbyPageProps) {
             {isConnected ? '🟢 연결됨' : '🔴 연결 중...'}
           </div>
         </div>
+
+        {/* 사용자 정보 및 전적 */}
+        {currentUser && (
+          <div className="user-stats-card">
+            <div className="user-info-row">
+              <span className="user-nickname">{currentUser.nickname}</span>
+              {isGuest && <span className="guest-tag">게스트</span>}
+            </div>
+            {!isGuest && stats && (
+              <div className="stats-row">
+                <div className="stat-item win">
+                  <span className="stat-label">승</span>
+                  <span className="stat-value">{stats.wins}</span>
+                </div>
+                <div className="stat-item draw">
+                  <span className="stat-label">무</span>
+                  <span className="stat-value">{stats.draws}</span>
+                </div>
+                <div className="stat-item loss">
+                  <span className="stat-label">패</span>
+                  <span className="stat-value">{stats.losses}</span>
+                </div>
+                <div className="stat-divider" />
+                <div className="stat-item winrate">
+                  <span className="stat-label">승률</span>
+                  <span className="stat-value">{stats.winRate}%</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="lobby-actions">
           <motion.button

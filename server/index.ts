@@ -6,6 +6,7 @@ import type { ServerToClientEvents, ClientToServerEvents, Player, ChatMessage } 
 import { roomManager } from './game/room-manager';
 import { initDatabase } from './db/sqlite';
 import authRoutes from './routes/auth.routes';
+import { userRepository } from './repositories/user.repository';
 
 const app = express();
 const httpServer = createServer(app);
@@ -39,6 +40,40 @@ const RECONNECT_TIMEOUT = 30000; // 30초 대기
 const chatHistory: Map<string, ChatMessage[]> = new Map();
 const MAX_CHAT_HISTORY = 100; // 방당 최대 메시지 수
 
+// 게임 종료 시 전적 기록 함수
+function recordGameResult(
+  winner: 'black' | 'white',
+  blackPlayer: Player | null,
+  whitePlayer: Player | null
+): void {
+  if (!blackPlayer || !whitePlayer) return;
+
+  const winnerNickname = winner === 'black' ? blackPlayer.nickname : whitePlayer.nickname;
+  const loserNickname = winner === 'black' ? whitePlayer.nickname : blackPlayer.nickname;
+
+  // 게스트가 아닌 경우에만 기록 (isGuest가 false인 경우)
+  if (!blackPlayer.isGuest && !whitePlayer.isGuest) {
+    // 둘 다 회원인 경우
+    userRepository.recordWinByNickname(winnerNickname);
+    userRepository.recordLossByNickname(loserNickname);
+  } else if (!blackPlayer.isGuest) {
+    // 흑만 회원인 경우
+    if (winner === 'black') {
+      userRepository.recordWinByNickname(blackPlayer.nickname);
+    } else {
+      userRepository.recordLossByNickname(blackPlayer.nickname);
+    }
+  } else if (!whitePlayer.isGuest) {
+    // 백만 회원인 경우
+    if (winner === 'white') {
+      userRepository.recordWinByNickname(whitePlayer.nickname);
+    } else {
+      userRepository.recordLossByNickname(whitePlayer.nickname);
+    }
+  }
+  // 둘 다 게스트인 경우 기록하지 않음
+}
+
 // Socket.io 연결 처리
 io.on('connection', (socket) => {
   console.log(`클라이언트 연결: ${socket.id}`);
@@ -63,6 +98,36 @@ io.on('connection', (socket) => {
 
     // 생성자에게 입장 정보 전송
     const session = roomManager.getGameSession(room.id);
+    
+    // 자동 수 두기 콜백 설정 (게임 시작 전이므로 아직 타이머는 시작하지 않음)
+    session!.setAutoPlaceCallback((row, col, color) => {
+      const state = session!.getState();
+      const lastMove = state.moveHistory[state.moveHistory.length - 1];
+
+      // 모든 플레이어에게 자동 수 두기 알림
+      io.to(room.id).emit('stonePlaced', lastMove.row, lastMove.col, lastMove.color);
+
+      // 승리 체크
+      const winner = session!.getWinner();
+      if (winner) {
+        const winnerPlayer = winner === 'black' ? state.blackPlayer : state.whitePlayer;
+        io.to(room.id).emit('gameEnded', winner, `${winnerPlayer?.nickname}님이 승리했습니다!`);
+        
+        // 전적 기록
+        recordGameResult(winner, state.blackPlayer, state.whitePlayer);
+        
+        // 방 상태 업데이트
+        const roomInfo = roomManager.getRoom(room.id);
+        if (roomInfo) {
+          roomInfo.status = 'finished';
+          io.emit('roomList', roomManager.getRoomList());
+        }
+      } else {
+        // 턴 변경 알림 (타이머 시작 시간 포함)
+        io.to(room.id).emit('turnChanged', state.currentTurn, state.turnStartTime || Date.now());
+      }
+    });
+    
     socket.emit('joinedRoom', room, session!.getState());
 
     // 채팅 히스토리 초기화
@@ -92,6 +157,35 @@ io.on('connection', (socket) => {
     // 게임 세션 가져오기
     const session = roomManager.getGameSession(room.id);
     const gameState = session!.getState();
+
+    // 자동 수 두기 콜백 설정
+    session!.setAutoPlaceCallback((row, col, color) => {
+      const state = session!.getState();
+      const lastMove = state.moveHistory[state.moveHistory.length - 1];
+
+      // 모든 플레이어에게 자동 수 두기 알림
+      io.to(room.id).emit('stonePlaced', lastMove.row, lastMove.col, lastMove.color);
+
+      // 승리 체크
+      const winner = session!.getWinner();
+      if (winner) {
+        const winnerPlayer = winner === 'black' ? state.blackPlayer : state.whitePlayer;
+        io.to(room.id).emit('gameEnded', winner, `${winnerPlayer?.nickname}님이 승리했습니다!`);
+        
+        // 전적 기록
+        recordGameResult(winner, state.blackPlayer, state.whitePlayer);
+        
+        // 방 상태 업데이트
+        const roomInfo = roomManager.getRoom(room.id);
+        if (roomInfo) {
+          roomInfo.status = 'finished';
+          io.emit('roomList', roomManager.getRoomList());
+        }
+      } else {
+        // 턴 변경 알림 (타이머 시작 시간 포함)
+        io.to(room.id).emit('turnChanged', state.currentTurn, state.turnStartTime || Date.now());
+      }
+    });
 
     // 입장자에게 정보 전송
     socket.emit('joinedRoom', room, gameState);
@@ -252,6 +346,9 @@ io.on('connection', (socket) => {
       const winnerPlayer = winner === 'black' ? state.blackPlayer : state.whitePlayer;
       io.to(roomId).emit('gameEnded', winner, `${winnerPlayer?.nickname}님이 승리했습니다!`);
       
+      // 전적 기록
+      recordGameResult(winner, state.blackPlayer, state.whitePlayer);
+      
       // 방 상태 업데이트
       const room = roomManager.getRoom(roomId);
       if (room) {
@@ -259,8 +356,8 @@ io.on('connection', (socket) => {
         io.emit('roomList', roomManager.getRoomList());
       }
     } else {
-      // 턴 변경 알림
-      io.to(roomId).emit('turnChanged', state.currentTurn);
+      // 턴 변경 알림 (타이머 시작 시간 포함)
+      io.to(roomId).emit('turnChanged', state.currentTurn, state.turnStartTime || Date.now());
     }
   });
 

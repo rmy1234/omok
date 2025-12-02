@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { socketClient, type Room, type GameState, type Player } from '../../infrastructure/socket/socket-client';
 import { useUserStore } from '../../infrastructure/state/user-store';
 import { ChatBox } from '../components/ChatBox';
+import { MultiplayerTimer } from '../components/MultiplayerTimer';
 import '../styles/App.css';
 import '../styles/Lobby.css';
 import '../styles/Chat.css';
@@ -113,19 +114,18 @@ export function RoomPage({ onNavigate }: RoomPageProps) {
         if (newBoard[row] && newBoard[row][col] === null) {
           newBoard[row][col] = color;
         }
-        const nextTurn = color === 'black' ? 'white' : 'black';
         return {
           ...prev,
           board: newBoard,
-          currentTurn: nextTurn,
           moveHistory: [...prev.moveHistory, { row, col, color }],
+          // 턴 변경과 타이머는 turnChanged 이벤트에서 처리
         };
       });
     };
 
     // 턴 변경
-    const handleTurnChanged = (turn: 'black' | 'white') => {
-      setGameState((prev) => prev ? { ...prev, currentTurn: turn } : null);
+    const handleTurnChanged = (turn: 'black' | 'white', turnStartTime: number) => {
+      setGameState((prev) => prev ? { ...prev, currentTurn: turn, turnStartTime } : null);
     };
 
     // 게임 종료
@@ -398,16 +398,25 @@ export function RoomPage({ onNavigate }: RoomPageProps) {
           </div>
         </div>
 
-        {/* 턴 표시 */}
-        <div className="turn-info">
-          {isSpectating ? (
-            <span className="spectator-turn">
-              {gameState?.currentTurn === 'black' ? '흑' : '백'}의 차례입니다
-            </span>
-          ) : isMyTurn() ? (
-            <span className="my-turn">내 차례입니다!</span>
-          ) : (
-            <span className="opponent-turn">상대방 차례입니다...</span>
+        {/* 턴 표시 및 타이머 */}
+        <div className="turn-info-container">
+          <div className="turn-info">
+            {isSpectating ? (
+              <span className="spectator-turn">
+                {gameState?.currentTurn === 'black' ? '흑' : '백'}의 차례입니다
+              </span>
+            ) : isMyTurn() ? (
+              <span className="my-turn">내 차례입니다!</span>
+            ) : (
+              <span className="opponent-turn">상대방 차례입니다...</span>
+            )}
+          </div>
+          {gameState && !gameState.winner && (
+            <MultiplayerTimer
+              currentTurn={gameState.currentTurn}
+              turnStartTime={gameState.turnStartTime}
+              gameWinner={gameState.winner}
+            />
           )}
         </div>
 

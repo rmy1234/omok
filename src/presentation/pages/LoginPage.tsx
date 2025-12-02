@@ -24,7 +24,7 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
       const result = await loginUseCase.execute({ username, password });
       
       if (result.success && result.user) {
-        setUser(result.user);
+        setUser(result.user, result.stats);
         onNavigate('home');
       } else {
         setError(result.error || '로그인에 실패했습니다.');

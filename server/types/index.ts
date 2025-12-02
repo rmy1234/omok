@@ -25,6 +25,7 @@ export interface GameState {
   whitePlayer: Player | null;
   winner: 'black' | 'white' | null;
   moveHistory: { row: number; col: number; color: 'black' | 'white' }[];
+  turnStartTime: number | null; // 서버 타이머 동기화용
 }
 
 export interface RoomInfo {
@@ -66,7 +67,7 @@ export interface ServerToClientEvents {
   
   // 게임 이벤트
   stonePlaced: (row: number, col: number, color: 'black' | 'white') => void;
-  turnChanged: (turn: 'black' | 'white') => void;
+  turnChanged: (turn: 'black' | 'white', turnStartTime: number) => void;
   gameEnded: (winner: 'black' | 'white', reason: string) => void;
   gameReset: (gameState: GameState) => void;
   
