@@ -43,6 +43,14 @@ export interface RoomInfo {
   status: 'waiting' | 'playing' | 'finished';
 }
 
+export interface ChatMessage {
+  id: string;
+  sender: string;
+  message: string;
+  timestamp: number;
+  isSystem?: boolean;
+}
+
 class SocketClient {
   private socket: Socket | null = null;
   private listeners: Map<string, Set<Function>> = new Map();
@@ -151,6 +159,11 @@ class SocketClient {
 
   resetGame(roomId: string): void {
     this.socket?.emit('resetGame', roomId);
+  }
+
+  // 채팅 관련
+  sendMessage(roomId: string, message: string): void {
+    this.socket?.emit('sendMessage', roomId, message);
   }
 }
 

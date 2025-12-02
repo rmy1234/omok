@@ -36,6 +36,15 @@ export interface RoomInfo {
   status: 'waiting' | 'playing' | 'finished';
 }
 
+// 채팅 메시지 타입
+export interface ChatMessage {
+  id: string;
+  sender: string;
+  message: string;
+  timestamp: number;
+  isSystem?: boolean;
+}
+
 // Socket.io 이벤트 타입
 export interface ServerToClientEvents {
   // 로비 이벤트
@@ -61,6 +70,10 @@ export interface ServerToClientEvents {
   gameEnded: (winner: 'black' | 'white', reason: string) => void;
   gameReset: (gameState: GameState) => void;
   
+  // 채팅 이벤트
+  newMessage: (message: ChatMessage) => void;
+  chatHistory: (messages: ChatMessage[]) => void;
+  
   // 에러
   error: (message: string) => void;
 }
@@ -80,5 +93,8 @@ export interface ClientToServerEvents {
   // 게임 이벤트
   placeStone: (roomId: string, row: number, col: number) => void;
   resetGame: (roomId: string) => void;
+  
+  // 채팅 이벤트
+  sendMessage: (roomId: string, message: string) => void;
 }
 

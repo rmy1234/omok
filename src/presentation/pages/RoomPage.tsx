@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { socketClient, type Room, type GameState, type Player } from '../../infrastructure/socket/socket-client';
 import { useUserStore } from '../../infrastructure/state/user-store';
+import { ChatBox } from '../components/ChatBox';
 import '../styles/App.css';
 import '../styles/Lobby.css';
+import '../styles/Chat.css';
 
 interface RoomPageProps {
   onNavigate: (page: 'home' | 'login' | 'signup' | 'game' | 'lobby' | 'room') => void;
@@ -419,161 +421,174 @@ export function RoomPage({ onNavigate }: RoomPageProps) {
           </div>
         )}
 
-        {/* 게임 보드 */}
-        <div className="board-container">
-          <div
-            ref={boardRef}
-            className="board"
-            onClick={handleBoardClick}
-            onMouseMove={handleBoardMouseMove}
-            onMouseLeave={handleBoardMouseLeave}
-            style={{ 
-              width: BOARD_TOTAL_SIZE, 
-              height: BOARD_TOTAL_SIZE,
-              cursor: !isSpectating && isMyTurn() && !winner ? 'pointer' : 'default' 
-            }}
-          >
-            {/* SVG 격자선 */}
-            <svg
-              className="board-grid"
-              width={BOARD_TOTAL_SIZE}
-              height={BOARD_TOTAL_SIZE}
-              style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}
-            >
-              {/* 가로선 15개 */}
-              {Array.from({ length: BOARD_SIZE }, (_, i) => {
-                const y = BOARD_PADDING + i * CELL_SIZE;
-                return (
-                  <line
-                    key={`h-${i}`}
-                    x1={BOARD_PADDING}
-                    y1={y}
-                    x2={BOARD_PADDING + GRID_SIZE}
-                    y2={y}
-                    stroke="#3c2814"
-                    strokeWidth={i === 0 || i === BOARD_SIZE - 1 ? 2 : 1}
-                  />
-                );
-              })}
-              {/* 세로선 15개 */}
-              {Array.from({ length: BOARD_SIZE }, (_, i) => {
-                const x = BOARD_PADDING + i * CELL_SIZE;
-                return (
-                  <line
-                    key={`v-${i}`}
-                    x1={x}
-                    y1={BOARD_PADDING}
-                    x2={x}
-                    y2={BOARD_PADDING + GRID_SIZE}
-                    stroke="#3c2814"
-                    strokeWidth={i === 0 || i === BOARD_SIZE - 1 ? 2 : 1}
-                  />
-                );
-              })}
-              {/* 화점 9개 */}
-              {STAR_POINTS.map(([row, col]) => {
-                const cx = BOARD_PADDING + col * CELL_SIZE;
-                const cy = BOARD_PADDING + row * CELL_SIZE;
-                const stone = gameState?.board[row]?.[col];
-                if (stone) return null;
-                return (
-                  <circle
-                    key={`star-${row}-${col}`}
-                    cx={cx}
-                    cy={cy}
-                    r={4}
-                    fill="#3c2814"
-                  />
-                );
-              })}
-            </svg>
-
-            {/* 모든 교차점에 돌/프리뷰 렌더링 */}
-            {Array.from({ length: BOARD_SIZE }, (_, row) =>
-              Array.from({ length: BOARD_SIZE }, (_, col) => {
-                const stone = gameState?.board[row]?.[col];
-                const isHovered = hoveredCell?.row === row && hoveredCell?.col === col;
-                const left = BOARD_PADDING + col * CELL_SIZE;
-                const top = BOARD_PADDING + row * CELL_SIZE;
-                
-                // 마지막 수 확인
-                const lastMove = gameState?.moveHistory && gameState.moveHistory.length > 0
-                  ? gameState.moveHistory[gameState.moveHistory.length - 1]
-                  : null;
-                const isLastMove = lastMove && lastMove.row === row && lastMove.col === col;
-
-                return (
-                  <div key={`${row}-${col}`}>
-                    {stone && (
-                      <motion.div
-                        className={`stone stone-${stone} ${isLastMove ? 'last-move' : ''}`}
-                        style={{ left, top }}
-                        initial={{ scale: 0, x: '-50%', y: '-50%' }}
-                        animate={{ scale: 1, x: '-50%', y: '-50%' }}
-                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+        {/* 게임 레이아웃 (보드 + 채팅) */}
+        <div className="game-layout">
+          {/* 게임 보드 */}
+          <div className="game-main">
+            <div className="board-container">
+              <div
+                ref={boardRef}
+                className="board"
+                onClick={handleBoardClick}
+                onMouseMove={handleBoardMouseMove}
+                onMouseLeave={handleBoardMouseLeave}
+                style={{ 
+                  width: BOARD_TOTAL_SIZE, 
+                  height: BOARD_TOTAL_SIZE,
+                  cursor: !isSpectating && isMyTurn() && !winner ? 'pointer' : 'default' 
+                }}
+              >
+                {/* SVG 격자선 */}
+                <svg
+                  className="board-grid"
+                  width={BOARD_TOTAL_SIZE}
+                  height={BOARD_TOTAL_SIZE}
+                  style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}
+                >
+                  {/* 가로선 15개 */}
+                  {Array.from({ length: BOARD_SIZE }, (_, i) => {
+                    const y = BOARD_PADDING + i * CELL_SIZE;
+                    return (
+                      <line
+                        key={`h-${i}`}
+                        x1={BOARD_PADDING}
+                        y1={y}
+                        x2={BOARD_PADDING + GRID_SIZE}
+                        y2={y}
+                        stroke="#3c2814"
+                        strokeWidth={i === 0 || i === BOARD_SIZE - 1 ? 2 : 1}
                       />
-                    )}
-                    {!stone && isHovered && !isSpectating && isMyTurn() && !winner && (
-                      <div className="stone-preview" style={{ left, top }} />
-                    )}
-                  </div>
-                );
-              })
-            )}
+                    );
+                  })}
+                  {/* 세로선 15개 */}
+                  {Array.from({ length: BOARD_SIZE }, (_, i) => {
+                    const x = BOARD_PADDING + i * CELL_SIZE;
+                    return (
+                      <line
+                        key={`v-${i}`}
+                        x1={x}
+                        y1={BOARD_PADDING}
+                        x2={x}
+                        y2={BOARD_PADDING + GRID_SIZE}
+                        stroke="#3c2814"
+                        strokeWidth={i === 0 || i === BOARD_SIZE - 1 ? 2 : 1}
+                      />
+                    );
+                  })}
+                  {/* 화점 9개 */}
+                  {STAR_POINTS.map(([row, col]) => {
+                    const cx = BOARD_PADDING + col * CELL_SIZE;
+                    const cy = BOARD_PADDING + row * CELL_SIZE;
+                    const stone = gameState?.board[row]?.[col];
+                    if (stone) return null;
+                    return (
+                      <circle
+                        key={`star-${row}-${col}`}
+                        cx={cx}
+                        cy={cy}
+                        r={4}
+                        fill="#3c2814"
+                      />
+                    );
+                  })}
+                </svg>
+
+                {/* 모든 교차점에 돌/프리뷰 렌더링 */}
+                {Array.from({ length: BOARD_SIZE }, (_, row) =>
+                  Array.from({ length: BOARD_SIZE }, (_, col) => {
+                    const stone = gameState?.board[row]?.[col];
+                    const isHovered = hoveredCell?.row === row && hoveredCell?.col === col;
+                    const left = BOARD_PADDING + col * CELL_SIZE;
+                    const top = BOARD_PADDING + row * CELL_SIZE;
+                    
+                    // 마지막 수 확인
+                    const lastMove = gameState?.moveHistory && gameState.moveHistory.length > 0
+                      ? gameState.moveHistory[gameState.moveHistory.length - 1]
+                      : null;
+                    const isLastMove = lastMove && lastMove.row === row && lastMove.col === col;
+
+                    return (
+                      <div key={`${row}-${col}`}>
+                        {stone && (
+                          <motion.div
+                            className={`stone stone-${stone} ${isLastMove ? 'last-move' : ''}`}
+                            style={{ left, top }}
+                            initial={{ scale: 0, x: '-50%', y: '-50%' }}
+                            animate={{ scale: 1, x: '-50%', y: '-50%' }}
+                            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                          />
+                        )}
+                        {!stone && isHovered && !isSpectating && isMyTurn() && !winner && (
+                          <div className="stone-preview" style={{ left, top }} />
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* 바둑판 위 승리 모달 */}
+              <AnimatePresence>
+                {winner && (
+                  <motion.div
+                    className="board-victory-overlay"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <motion.div
+                      className="board-victory-modal"
+                      initial={{ scale: 0.8, opacity: 0, y: 20 }}
+                      animate={{ scale: 1, opacity: 1, y: 0 }}
+                      exit={{ scale: 0.8, opacity: 0, y: 20 }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                    >
+                      <div className={`victory-stone ${winner.color}`} />
+                      <h2 className="victory-title">
+                        {isSpectating 
+                          ? `${winner.color === 'black' ? '흑' : '백'} 승리!`
+                          : winner.color === myColor() ? '승리!' : '패배...'}
+                      </h2>
+                      <p className="victory-message">{winner.message}</p>
+                      <p className="victory-move-count">
+                        총 {gameState?.board.reduce((count, row) => 
+                          count + row.filter(cell => cell !== null).length, 0
+                        ) ?? 0}수
+                      </p>
+                      <div className="victory-buttons">
+                        {!isSpectating && (
+                          <motion.button
+                            className="victory-button restart-button"
+                            onClick={handleRestart}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            다시 하기
+                          </motion.button>
+                        )}
+                        <motion.button
+                          className="victory-button exit-button"
+                          onClick={handleLeaveRoom}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          나가기
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
-          {/* 바둑판 위 승리 모달 */}
-          <AnimatePresence>
-            {winner && (
-              <motion.div
-                className="board-victory-overlay"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <motion.div
-                  className="board-victory-modal"
-                  initial={{ scale: 0.8, opacity: 0, y: 20 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  exit={{ scale: 0.8, opacity: 0, y: 20 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                >
-                  <div className={`victory-stone ${winner.color}`} />
-                  <h2 className="victory-title">
-                    {isSpectating 
-                      ? `${winner.color === 'black' ? '흑' : '백'} 승리!`
-                      : winner.color === myColor() ? '승리!' : '패배...'}
-                  </h2>
-                  <p className="victory-message">{winner.message}</p>
-                  <p className="victory-move-count">
-                    총 {gameState?.board.reduce((count, row) => 
-                      count + row.filter(cell => cell !== null).length, 0
-                    ) ?? 0}수
-                  </p>
-                  <div className="victory-buttons">
-                    {!isSpectating && (
-                      <motion.button
-                        className="victory-button restart-button"
-                        onClick={handleRestart}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        다시 하기
-                      </motion.button>
-                    )}
-                    <motion.button
-                      className="victory-button exit-button"
-                      onClick={handleLeaveRoom}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      나가기
-                    </motion.button>
-                  </div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* 채팅 박스 - 관전자는 채팅 사용 불가 */}
+          {room && currentUser && !isSpectating && (
+            <ChatBox 
+              roomId={room.id} 
+              currentUserNickname={currentUser.nickname} 
+            />
+          )}
         </div>
       </div>
     </div>

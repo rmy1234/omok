@@ -1,0 +1,330 @@
+/* 채팅 박스 스타일 */
+.chat-box {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  width: 320px;
+  height: 620px;
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+  border-radius: 16px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 1000;
+  user-select: none;
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #0f3460, #16213e);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chat-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-icon {
+  font-size: 1.2rem;
+}
+
+.chat-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e8e8e8;
+  letter-spacing: 0.5px;
+}
+
+.chat-header-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-minimize-button {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #e8e8e8;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.chat-minimize-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.chat-minimize-button span {
+  margin-top: -2px;
+}
+
+/* 최소화된 채팅 아이콘 */
+.chat-minimized {
+  position: fixed;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4a90d9, #357abd);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    0 4px 20px rgba(74, 144, 217, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  z-index: 1000;
+  user-select: none;
+}
+
+.chat-minimized-icon {
+  font-size: 1.8rem;
+}
+
+.chat-unread-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.5);
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.chat-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* 메시지 스타일 */
+.chat-message {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  word-break: break-word;
+}
+
+.my-message {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #4a90d9, #357abd);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.other-message {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.1);
+  color: #e8e8e8;
+  border-bottom-left-radius: 4px;
+}
+
+.system-message {
+  align-self: center;
+  background: rgba(255, 193, 7, 0.15);
+  color: #ffc107;
+  font-size: 0.8rem;
+  padding: 6px 12px;
+  border-radius: 20px;
+  max-width: 90%;
+}
+
+.system-text {
+  text-align: center;
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.message-sender {
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.my-message .message-sender {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.other-message .message-sender {
+  color: #4a90d9;
+}
+
+.message-time {
+  font-size: 0.65rem;
+  opacity: 0.6;
+}
+
+.message-content {
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* 입력 폼 */
+.chat-input-form {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chat-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #e8e8e8;
+  font-size: 0.9rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.chat-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.chat-input:focus {
+  border-color: #4a90d9;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.2);
+}
+
+.chat-send-button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #4a90d9, #357abd);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chat-send-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5a9fe9, #4588cc);
+  box-shadow: 0 4px 12px rgba(74, 144, 217, 0.4);
+}
+
+.chat-send-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 게임 레이아웃 수정 - 오목판 가운데 고정 */
+.game-layout {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.game-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 반응형 */
+@media (max-width: 1100px) {
+  .game-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .chat-box {
+    width: 300px;
+    height: 500px;
+  }
+
+  .chat-minimized {
+    width: 50px;
+    height: 50px;
+  }
+
+  .chat-minimized-icon {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 700px) {
+  .chat-box {
+    width: 280px;
+    height: 400px;
+  }
+
+  .chat-messages {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .chat-message {
+    padding: 8px 12px;
+  }
+
+  .message-content {
+    font-size: 0.85rem;
+  }
+}

@@ -2,7 +2,7 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
-import type { ServerToClientEvents, ClientToServerEvents, Player } from './types';
+import type { ServerToClientEvents, ClientToServerEvents, Player, ChatMessage } from './types';
 import { roomManager } from './game/room-manager';
 import { initDatabase } from './db/sqlite';
 import authRoutes from './routes/auth.routes';
@@ -35,6 +35,10 @@ app.get('/health', (req, res) => {
 const disconnectedPlayers: Map<string, NodeJS.Timeout> = new Map();
 const RECONNECT_TIMEOUT = 30000; // 30초 대기
 
+// 방별 채팅 히스토리 (roomId -> messages)
+const chatHistory: Map<string, ChatMessage[]> = new Map();
+const MAX_CHAT_HISTORY = 100; // 방당 최대 메시지 수
+
 // Socket.io 연결 처리
 io.on('connection', (socket) => {
   console.log(`클라이언트 연결: ${socket.id}`);
@@ -60,6 +64,9 @@ io.on('connection', (socket) => {
     // 생성자에게 입장 정보 전송
     const session = roomManager.getGameSession(room.id);
     socket.emit('joinedRoom', room, session!.getState());
+
+    // 채팅 히스토리 초기화
+    chatHistory.set(room.id, []);
 
     // 모든 클라이언트에게 방 목록 업데이트
     io.emit('roomList', roomManager.getRoomList());
@@ -88,6 +95,10 @@ io.on('connection', (socket) => {
 
     // 입장자에게 정보 전송
     socket.emit('joinedRoom', room, gameState);
+
+    // 채팅 히스토리 전송
+    const history = chatHistory.get(room.id) || [];
+    socket.emit('chatHistory', history);
 
     // 방의 다른 플레이어에게 알림
     socket.to(room.id).emit('playerJoined', { ...player, id: socket.id });
@@ -133,6 +144,10 @@ io.on('connection', (socket) => {
     // 재접속자에게 정보 전송
     socket.emit('joinedRoom', result.room, gameState);
 
+    // 채팅 히스토리 전송
+    const history = chatHistory.get(result.room.id) || [];
+    socket.emit('chatHistory', history);
+
     console.log(`방 재접속: ${result.room.name} (${result.room.id}) - ${player.nickname}`);
   });
 
@@ -175,6 +190,10 @@ io.on('connection', (socket) => {
 
     // 관전자에게 정보 전송
     socket.emit('joinedAsSpectator', result.room, gameState);
+
+    // 채팅 히스토리 전송
+    const spectatorHistory = chatHistory.get(result.room.id) || [];
+    socket.emit('chatHistory', spectatorHistory);
 
     // 재접속이 아닌 경우에만 다른 플레이어에게 알림
     if (!result.isRejoin) {
@@ -262,6 +281,35 @@ io.on('connection', (socket) => {
     io.emit('roomList', roomManager.getRoomList());
 
     console.log(`게임 리셋: ${room.name} (${room.id})`);
+  });
+
+  // 채팅 메시지 전송
+  socket.on('sendMessage', (roomId: string, message: string) => {
+    if (!currentPlayer || !message.trim()) return;
+
+    const chatMessage: ChatMessage = {
+      id: `${Date.now()}-${socket.id}`,
+      sender: currentPlayer.nickname,
+      message: message.trim(),
+      timestamp: Date.now(),
+    };
+
+    // 채팅 히스토리에 저장
+    if (!chatHistory.has(roomId)) {
+      chatHistory.set(roomId, []);
+    }
+    const history = chatHistory.get(roomId)!;
+    history.push(chatMessage);
+    
+    // 최대 메시지 수 초과 시 오래된 메시지 삭제
+    if (history.length > MAX_CHAT_HISTORY) {
+      history.shift();
+    }
+
+    // 방의 모든 사용자에게 메시지 전송
+    io.to(roomId).emit('newMessage', chatMessage);
+
+    console.log(`채팅 [${roomId}] ${currentPlayer.nickname}: ${message.trim()}`);
   });
 
   // 연결 해제
