@@ -14,10 +14,18 @@ export function LobbyPage({ onNavigate, onJoinRoom }: LobbyPageProps) {
   const [rooms, setRooms] = useState<RoomInfo[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [roomName, setRoomName] = useState('');
-  const [isConnected, setIsConnected] = useState(false);
   const { currentUser, isGuest, stats, setStats } = useUserStore();
+  const [gameMode, setGameMode] = useState<'friendly' | 'ranked'>(isGuest ? 'friendly' : 'ranked');
+  const [isConnected, setIsConnected] = useState(false);
+  
+  // 게스트인 경우 친선게임으로 강제 설정
+  useEffect(() => {
+    if (isGuest && gameMode === 'ranked') {
+      setGameMode('friendly');
+    }
+  }, [isGuest, gameMode]);
 
-  // 전적 정보 새로고침
+  // 전적 정보 (페이지 진입 시 최신 데이터 가져오기)
   useEffect(() => {
     if (currentUser && !isGuest) {
       getStats(currentUser.nickname).then((result) => {
@@ -94,7 +102,7 @@ export function LobbyPage({ onNavigate, onJoinRoom }: LobbyPageProps) {
     socketClient.createRoom(roomName.trim(), {
       nickname: currentUser.nickname,
       isGuest: 'isGuest' in currentUser && currentUser.isGuest,
-    });
+    }, gameMode);
 
     setShowCreateModal(false);
     setRoomName('');
@@ -306,6 +314,35 @@ export function LobbyPage({ onNavigate, onJoinRoom }: LobbyPageProps) {
                 autoFocus
                 onKeyPress={(e) => e.key === 'Enter' && handleCreateRoom()}
               />
+              <div className="game-mode-selector">
+                <label>게임 모드</label>
+                <div className="mode-buttons">
+                  <motion.button
+                    className={`mode-button ${gameMode === 'ranked' ? 'active' : ''} ${isGuest ? 'disabled' : ''}`}
+                    onClick={() => !isGuest && setGameMode('ranked')}
+                    whileHover={!isGuest ? { scale: 1.05 } : {}}
+                    whileTap={!isGuest ? { scale: 0.95 } : {}}
+                    disabled={isGuest}
+                  >
+                    🏆 랭크게임
+                  </motion.button>
+                  <motion.button
+                    className={`mode-button ${gameMode === 'friendly' ? 'active' : ''}`}
+                    onClick={() => setGameMode('friendly')}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    🤝 친선게임
+                  </motion.button>
+                </div>
+                <p className="mode-description">
+                  {isGuest 
+                    ? '게스트는 친선게임만 가능합니다'
+                    : gameMode === 'ranked' 
+                    ? '랭크게임: 전적과 포인트에 영향을 줍니다' 
+                    : '친선게임: 전적과 포인트에 영향을 주지 않습니다'}
+                </p>
+              </div>
               <div className="modal-buttons">
                 <motion.button
                   className="modal-button cancel"

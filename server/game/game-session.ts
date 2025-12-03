@@ -261,5 +261,10 @@ export class GameSession {
   getWinner(): 'black' | 'white' | null {
     return this.winner;
   }
+
+  setWinner(winner: 'black' | 'white'): void {
+    this.winner = winner;
+    this.stopTurnTimer();
+  }
 }
 

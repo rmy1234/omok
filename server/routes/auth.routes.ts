@@ -91,6 +91,11 @@ router.get('/stats/:nickname', async (req: Request, res: Response) => {
   try {
     const { nickname } = req.params;
     
+    // 캐시 방지 헤더 설정
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
     const stats = userRepository.getStatsByNickname(nickname);
     
     if (!stats) {
@@ -108,6 +113,11 @@ router.get('/stats/:nickname', async (req: Request, res: Response) => {
 // 랭킹 조회
 router.get('/rankings', async (_req: Request, res: Response) => {
   try {
+    // 캐시 방지 헤더 설정
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
     const rankings = userRepository.getRankings();
     res.json({ success: true, rankings });
   } catch (error) {

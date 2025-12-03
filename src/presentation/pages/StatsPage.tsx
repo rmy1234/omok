@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { getRankings, type RankingEntry } from '../../infrastructure/api/auth-api';
 import { useUserStore } from '../../infrastructure/state/user-store';
+import { RankEmblem } from '../components/RankEmblem';
 import '../styles/Stats.css';
 
 interface StatsPageProps {
@@ -99,6 +100,7 @@ export function StatsPage({ onNavigate }: StatsPageProps) {
               <span className="col-rank">순위</span>
               <span className="col-nickname">닉네임</span>
               <span className="col-record">전적</span>
+              <span className="col-points">포인트</span>
               <span className="col-winrate">승률</span>
             </div>
             
@@ -117,6 +119,9 @@ export function StatsPage({ onNavigate }: StatsPageProps) {
                     {getRankIcon(entry.rank)}
                   </span>
                   <span className="col-nickname">
+                    {entry.stats.rank && entry.stats.points >= 50 && (
+                      <RankEmblem tier={entry.stats.rank} size="small" />
+                    )}
                     {entry.nickname}
                     {currentUser?.nickname === entry.nickname && (
                       <span className="my-badge">나</span>
@@ -129,6 +134,9 @@ export function StatsPage({ onNavigate }: StatsPageProps) {
                       <span className="draw">{entry.stats.draws}무</span>
                       <span className="loss">{entry.stats.losses}패</span>
                     </span>
+                  </span>
+                  <span className="col-points">
+                    {entry.stats.points}P
                   </span>
                   <span className="col-winrate">
                     <span className="winrate-value">{entry.stats.winRate}%</span>

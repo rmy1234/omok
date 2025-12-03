@@ -6,6 +6,8 @@ export interface Player {
   isGuest: boolean;
 }
 
+export type GameMode = 'friendly' | 'ranked';
+
 export interface Room {
   id: string;
   name: string;
@@ -13,6 +15,7 @@ export interface Room {
   guest: Player | null;
   spectators: Player[];
   status: 'waiting' | 'playing' | 'finished';
+  gameMode: GameMode;
   createdAt: Date;
 }
 
@@ -83,7 +86,7 @@ export interface ServerToClientEvents {
 export interface ClientToServerEvents {
   // 로비 이벤트
   getRooms: () => void;
-  createRoom: (roomName: string, player: Player) => void;
+  createRoom: (roomName: string, player: Player, gameMode?: GameMode) => void;
   joinRoom: (roomId: string, player: Player) => void;
   rejoinRoom: (roomId: string, player: Player) => void;
   leaveRoom: (roomId: string) => void;

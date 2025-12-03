@@ -44,9 +44,19 @@ function createTables(database: Database.Database): void {
       wins INTEGER DEFAULT 0,
       draws INTEGER DEFAULT 0,
       losses INTEGER DEFAULT 0,
+      points INTEGER DEFAULT 0,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  
+  // 기존 테이블에 points 컬럼이 없으면 추가 (마이그레이션)
+  try {
+    database.exec(`ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0`);
+    // 기존 사용자들에게 기본 포인트 부여
+    database.exec(`UPDATE users SET points = 50 WHERE points IS NULL`);
+  } catch (error) {
+    // 컬럼이 이미 존재하면 무시
+  }
 
   // 인덱스 생성
   database.exec(`

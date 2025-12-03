@@ -33,19 +33,37 @@
 }
 
 .back-button {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 14px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(102, 126, 234, 0.5);
+  color: #2d3748;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
   margin-bottom: 24px;
   transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .back-button:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: white;
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.back-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* 로딩 상태 */
@@ -108,13 +126,18 @@
 
 .rankings-header {
   display: grid;
-  grid-template-columns: 80px 1fr 180px 120px;
+  grid-template-columns: 80px 1fr 200px 100px 100px;
+  gap: 24px;
   padding: 16px 20px;
   background: rgba(0, 0, 0, 0.2);
   color: rgba(255, 255, 255, 0.9);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rankings-header > span {
+  font-size: 16px;
 }
 
 .rankings-body {
@@ -124,7 +147,8 @@
 
 .ranking-row {
   display: grid;
-  grid-template-columns: 80px 1fr 180px 120px;
+  grid-template-columns: 80px 1fr 200px 100px 100px;
+  gap: 24px;
   padding: 14px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   transition: background 0.2s ease;
@@ -174,7 +198,7 @@
   color: white;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .my-badge {
@@ -189,8 +213,9 @@
 /* 전적 컬럼 */
 .col-record {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
 }
 
 .record-total {
@@ -202,7 +227,7 @@
 .record-detail {
   display: flex;
   gap: 8px;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .record-detail .win {
@@ -243,6 +268,14 @@
   background: linear-gradient(90deg, #4a90d9, #68d391);
   border-radius: 3px;
   transition: width 0.5s ease;
+}
+
+/* 포인트 컬럼 */
+.col-points {
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  text-align: center;
 }
 
 /* 스크롤바 */

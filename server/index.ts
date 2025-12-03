@@ -2,11 +2,12 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
-import type { ServerToClientEvents, ClientToServerEvents, Player, ChatMessage } from './types';
+import type { ServerToClientEvents, ClientToServerEvents, Player, ChatMessage, GameMode } from './types';
 import { roomManager } from './game/room-manager';
 import { initDatabase } from './db/sqlite';
 import authRoutes from './routes/auth.routes';
 import { userRepository } from './repositories/user.repository';
+import { calculatePointsChange } from './utils/points';
 
 const app = express();
 const httpServer = createServer(app);
@@ -47,34 +48,70 @@ const spectatorStatus: Map<string, boolean> = new Map();
 function recordGameResult(
   winner: 'black' | 'white',
   blackPlayer: Player | null,
-  whitePlayer: Player | null
+  whitePlayer: Player | null,
+  gameMode: 'friendly' | 'ranked' = 'ranked'
 ): void {
   if (!blackPlayer || !whitePlayer) return;
 
   const winnerNickname = winner === 'black' ? blackPlayer.nickname : whitePlayer.nickname;
   const loserNickname = winner === 'black' ? whitePlayer.nickname : blackPlayer.nickname;
 
-  // 게스트가 아닌 경우에만 기록 (isGuest가 false인 경우)
-  if (!blackPlayer.isGuest && !whitePlayer.isGuest) {
-    // 둘 다 회원인 경우
-    userRepository.recordWinByNickname(winnerNickname);
-    userRepository.recordLossByNickname(loserNickname);
-  } else if (!blackPlayer.isGuest) {
-    // 흑만 회원인 경우
-    if (winner === 'black') {
-      userRepository.recordWinByNickname(blackPlayer.nickname);
-    } else {
-      userRepository.recordLossByNickname(blackPlayer.nickname);
+  // 친선게임인 경우 전적만 기록 (포인트 변화 없음)
+  if (gameMode === 'friendly') {
+    if (!blackPlayer.isGuest && !whitePlayer.isGuest) {
+      userRepository.recordFriendlyWinByNickname(winnerNickname);
+      userRepository.recordFriendlyLossByNickname(loserNickname);
+    } else if (!blackPlayer.isGuest) {
+      if (winner === 'black') {
+        userRepository.recordFriendlyWinByNickname(blackPlayer.nickname);
+      } else {
+        userRepository.recordFriendlyLossByNickname(blackPlayer.nickname);
+      }
+    } else if (!whitePlayer.isGuest) {
+      if (winner === 'white') {
+        userRepository.recordFriendlyWinByNickname(whitePlayer.nickname);
+      } else {
+        userRepository.recordFriendlyLossByNickname(whitePlayer.nickname);
+      }
     }
-  } else if (!whitePlayer.isGuest) {
-    // 백만 회원인 경우
-    if (winner === 'white') {
-      userRepository.recordWinByNickname(whitePlayer.nickname);
-    } else {
-      userRepository.recordLossByNickname(whitePlayer.nickname);
+    return;
+  }
+
+  // 랭크게임인 경우 포인트 계산 및 업데이트
+  if (gameMode === 'ranked') {
+    // 게스트가 아닌 경우에만 기록
+    if (!blackPlayer.isGuest && !whitePlayer.isGuest) {
+      // 둘 다 회원인 경우 - 랭크 기반 포인트 계산
+      const winnerStats = userRepository.getStatsByNickname(winnerNickname);
+      const loserStats = userRepository.getStatsByNickname(loserNickname);
+      
+      if (winnerStats && loserStats && winnerStats.rank && loserStats.rank) {
+        const winnerPointsChange = calculatePointsChange(winnerStats.rank, loserStats.rank, true);
+        const loserPointsChange = calculatePointsChange(loserStats.rank, winnerStats.rank, false);
+        
+        userRepository.recordWinByNickname(winnerNickname, winnerPointsChange);
+        userRepository.recordLossByNickname(loserNickname, loserPointsChange);
+      } else {
+        // 랭크 정보가 없으면 기본값 사용
+        userRepository.recordWinByNickname(winnerNickname, 10);
+        userRepository.recordLossByNickname(loserNickname, -10);
+      }
+    } else if (!blackPlayer.isGuest) {
+      // 흑만 회원인 경우
+      if (winner === 'black') {
+        userRepository.recordWinByNickname(blackPlayer.nickname, 10);
+      } else {
+        userRepository.recordLossByNickname(blackPlayer.nickname, -10);
+      }
+    } else if (!whitePlayer.isGuest) {
+      // 백만 회원인 경우
+      if (winner === 'white') {
+        userRepository.recordWinByNickname(whitePlayer.nickname, 10);
+      } else {
+        userRepository.recordLossByNickname(whitePlayer.nickname, -10);
+      }
     }
   }
-  // 둘 다 게스트인 경우 기록하지 않음
 }
 
 // Socket.io 연결 처리
@@ -91,8 +128,10 @@ io.on('connection', (socket) => {
   });
 
   // 방 생성
-  socket.on('createRoom', (roomName: string, player: Player) => {
-    const room = roomManager.createRoom(roomName, { ...player, id: socket.id });
+  socket.on('createRoom', (roomName: string, player: Player, gameMode?: GameMode) => {
+    // 게스트는 랭크게임 불가, 친선게임으로 강제 변경
+    const finalGameMode = player.isGuest ? 'friendly' : (gameMode || 'ranked');
+    const room = roomManager.createRoom(roomName, { ...player, id: socket.id }, finalGameMode);
     currentRoomId = room.id;
     currentPlayer = { ...player, id: socket.id };
     spectatorStatus.set(socket.id, false);
@@ -118,10 +157,10 @@ io.on('connection', (socket) => {
         io.to(room.id).emit('gameEnded', winner, `${winnerPlayer?.nickname}님이 승리했습니다!`);
         
         // 전적 기록
-        recordGameResult(winner, state.blackPlayer, state.whitePlayer);
+        const roomInfo = roomManager.getRoom(room.id);
+        recordGameResult(winner, state.blackPlayer, state.whitePlayer, roomInfo?.gameMode || 'ranked');
         
         // 방 상태 업데이트
-        const roomInfo = roomManager.getRoom(room.id);
         if (roomInfo) {
           roomInfo.status = 'finished';
           io.emit('roomList', roomManager.getRoomList());
@@ -178,10 +217,10 @@ io.on('connection', (socket) => {
         io.to(room.id).emit('gameEnded', winner, `${winnerPlayer?.nickname}님이 승리했습니다!`);
         
         // 전적 기록
-        recordGameResult(winner, state.blackPlayer, state.whitePlayer);
+        const roomInfo = roomManager.getRoom(room.id);
+        recordGameResult(winner, state.blackPlayer, state.whitePlayer, roomInfo?.gameMode || 'ranked');
         
         // 방 상태 업데이트
-        const roomInfo = roomManager.getRoom(room.id);
         if (roomInfo) {
           roomInfo.status = 'finished';
           io.emit('roomList', roomManager.getRoomList());
@@ -350,10 +389,10 @@ io.on('connection', (socket) => {
       io.to(roomId).emit('gameEnded', winner, `${winnerPlayer?.nickname}님이 승리했습니다!`);
       
       // 전적 기록
-      recordGameResult(winner, state.blackPlayer, state.whitePlayer);
+      const room = roomManager.getRoom(roomId);
+      recordGameResult(winner, state.blackPlayer, state.whitePlayer, room?.gameMode || 'ranked');
       
       // 방 상태 업데이트
-      const room = roomManager.getRoom(roomId);
       if (room) {
         room.status = 'finished';
         io.emit('roomList', roomManager.getRoomList());
@@ -445,9 +484,50 @@ io.on('connection', (socket) => {
       
       // 일정 시간 후 재접속이 없으면 방에서 나가기
       const roomIdCopy = currentRoomId;
+      const playerCopy = currentPlayer;
       const timer = setTimeout(() => {
         disconnectedPlayers.delete(timerKey);
-        console.log(`재접속 타임아웃: ${currentPlayer?.nickname}`);
+        console.log(`재접속 타임아웃: ${playerCopy?.nickname}`);
+        
+        // 게임 진행 중인 경우 전적 기록
+        const room = roomManager.getRoom(roomIdCopy);
+        const session = roomManager.getGameSession(roomIdCopy);
+        
+        if (room && session && room.status === 'playing' && playerCopy) {
+          const gameState = session.getState();
+          
+          // 게임이 이미 종료된 경우 전적 기록하지 않음
+          if (!gameState.winner) {
+            // 나간 플레이어가 흑인지 백인지 확인
+            let winnerColor: 'black' | 'white' | null = null;
+            let winnerPlayer: Player | null = null;
+            let loserPlayer: Player | null = null;
+            
+            if (gameState.blackPlayer && gameState.blackPlayer.id === playerCopy.id) {
+              // 흑이 나감 -> 백 승리
+              winnerColor = 'white';
+              winnerPlayer = gameState.whitePlayer;
+              loserPlayer = gameState.blackPlayer;
+            } else if (gameState.whitePlayer && gameState.whitePlayer.id === playerCopy.id) {
+              // 백이 나감 -> 흑 승리
+              winnerColor = 'black';
+              winnerPlayer = gameState.blackPlayer;
+              loserPlayer = gameState.whitePlayer;
+            }
+            
+            // 전적 기록 및 게임 종료 처리
+            if (winnerColor && winnerPlayer && loserPlayer) {
+              // 전적 기록
+              recordGameResult(winnerColor, gameState.blackPlayer, gameState.whitePlayer, room?.gameMode || 'ranked');
+              
+              // 게임 종료 상태로 변경
+              session.setWinner(winnerColor);
+              
+              // 방의 모든 클라이언트에게 게임 종료 알림
+              io.to(roomIdCopy).emit('gameEnded', winnerColor, `${winnerPlayer.nickname}님이 승리했습니다! (${loserPlayer.nickname}님이 나가셨습니다.)`);
+            }
+          }
+        }
         
         // 방에서 나가기 처리
         const result = roomManager.leaveRoom(roomIdCopy, socket.id);
@@ -472,6 +552,49 @@ io.on('connection', (socket) => {
 
   // 방 나가기 처리 함수
   function handleLeaveRoom(roomId: string) {
+    const room = roomManager.getRoom(roomId);
+    const session = roomManager.getGameSession(roomId);
+    
+    // 게임 진행 중이고 플레이어가 나가는 경우 전적 기록
+    if (room && session && room.status === 'playing' && currentPlayer) {
+      const gameState = session.getState();
+      const leavingPlayer = currentPlayer;
+      
+      // 게임이 이미 종료된 경우 전적 기록하지 않음
+      if (gameState.winner) {
+        // 이미 게임이 종료된 상태이므로 전적 기록 없이 나가기만 처리
+      } else {
+        // 나간 플레이어가 흑인지 백인지 확인
+        let winnerColor: 'black' | 'white' | null = null;
+        let winnerPlayer: Player | null = null;
+        let loserPlayer: Player | null = null;
+        
+        if (gameState.blackPlayer && gameState.blackPlayer.id === leavingPlayer.id) {
+          // 흑이 나감 -> 백 승리
+          winnerColor = 'white';
+          winnerPlayer = gameState.whitePlayer;
+          loserPlayer = gameState.blackPlayer;
+        } else if (gameState.whitePlayer && gameState.whitePlayer.id === leavingPlayer.id) {
+          // 백이 나감 -> 흑 승리
+          winnerColor = 'black';
+          winnerPlayer = gameState.blackPlayer;
+          loserPlayer = gameState.whitePlayer;
+        }
+        
+        // 전적 기록 및 게임 종료 처리
+        if (winnerColor && winnerPlayer && loserPlayer) {
+          // 전적 기록
+          recordGameResult(winnerColor, gameState.blackPlayer, gameState.whitePlayer, room?.gameMode || 'ranked');
+          
+          // 게임 종료 상태로 변경
+          session.setWinner(winnerColor);
+          
+          // 방의 모든 클라이언트에게 게임 종료 알림
+          io.to(roomId).emit('gameEnded', winnerColor, `${winnerPlayer.nickname}님이 승리했습니다! (${loserPlayer.nickname}님이 나가셨습니다.)`);
+        }
+      }
+    }
+    
     const result = roomManager.leaveRoom(roomId, socket.id);
     
     socket.leave(roomId);

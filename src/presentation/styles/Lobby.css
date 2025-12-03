@@ -425,6 +425,62 @@
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
 }
 
+.game-mode-selector {
+  margin-bottom: 24px;
+}
+
+.game-mode-selector label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 12px;
+}
+
+.mode-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.mode-button {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: white;
+  color: #4a5568;
+  transition: all 0.2s ease;
+}
+
+.mode-button.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+}
+
+.mode-button:hover:not(.disabled) {
+  border-color: #667eea;
+  transform: translateY(-1px);
+}
+
+.mode-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f7fafc;
+  color: #a0aec0;
+}
+
+.mode-description {
+  font-size: 12px;
+  color: #718096;
+  margin: 0;
+  text-align: center;
+}
+
 .modal-buttons {
   display: flex;
   gap: 12px;
@@ -690,6 +746,38 @@
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
+}
+
+.back-button {
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(102, 126, 234, 0.5);
+  color: #2d3748;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 24px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.back-button:hover {
+  background: white;
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.back-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .spectators-info {

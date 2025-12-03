@@ -129,8 +129,8 @@ class SocketClient {
     this.socket?.emit('getRooms');
   }
 
-  createRoom(roomName: string, player: Omit<Player, 'id'>): void {
-    this.socket?.emit('createRoom', roomName, player);
+  createRoom(roomName: string, player: Omit<Player, 'id'>, gameMode?: 'friendly' | 'ranked'): void {
+    this.socket?.emit('createRoom', roomName, player, gameMode || 'ranked');
   }
 
   joinRoom(roomId: string, player: Omit<Player, 'id'>): void {

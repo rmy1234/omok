@@ -1,4 +1,4 @@
-import type { Room, RoomInfo, Player, MAX_SPECTATORS } from '../types';
+import type { Room, RoomInfo, Player, MAX_SPECTATORS, GameMode } from '../types';
 import { GameSession } from './game-session';
 
 const MAX_SPECTATOR_COUNT = 5;
@@ -12,7 +12,7 @@ export class RoomManager {
     this.gameSessions = new Map();
   }
 
-  createRoom(name: string, host: Player): Room {
+  createRoom(name: string, host: Player, gameMode: GameMode = 'ranked'): Room {
     const id = this.generateRoomId();
     const room: Room = {
       id,
@@ -21,6 +21,7 @@ export class RoomManager {
       guest: null,
       spectators: [],
       status: 'waiting',
+      gameMode,
       createdAt: new Date(),
     };
     

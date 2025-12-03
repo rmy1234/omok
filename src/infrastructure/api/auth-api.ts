@@ -8,12 +8,16 @@ const getApiUrl = () => {
 
 const API_URL = getApiUrl();
 
+export type RankTier = 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM' | 'DIAMOND' | 'CHALLENGER';
+
 export interface GameStats {
   wins: number;
   draws: number;
   losses: number;
   totalGames: number;
   winRate: number;
+  points: number;
+  rank?: RankTier;
 }
 
 export interface AuthResponse {
@@ -66,7 +70,16 @@ export async function login(
 
 export async function getStats(nickname: string): Promise<{ success: boolean; stats?: GameStats; error?: string }> {
   try {
-    const response = await fetch(`${API_URL}/stats/${encodeURIComponent(nickname)}`);
+    // 캐시 방지를 위해 타임스탬프 추가
+    const timestamp = Date.now();
+    const response = await fetch(`${API_URL}/stats/${encodeURIComponent(nickname)}?t=${timestamp}`, {
+      method: 'GET',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
     const data = await response.json();
     return data;
   } catch (error) {
@@ -82,7 +95,16 @@ export interface RankingEntry {
 
 export async function getRankings(): Promise<{ success: boolean; rankings?: RankingEntry[]; error?: string }> {
   try {
-    const response = await fetch(`${API_URL}/rankings`);
+    // 캐시 방지를 위해 타임스탬프 추가
+    const timestamp = Date.now();
+    const response = await fetch(`${API_URL}/rankings?t=${timestamp}`, {
+      method: 'GET',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
     const data = await response.json();
     return data;
   } catch (error) {
