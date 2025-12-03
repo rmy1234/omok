@@ -657,12 +657,26 @@
   color: rgba(255, 255, 255, 0.9);
   font-size: 14px;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .spectators-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
   color: white;
   font-size: 14px;
   font-weight: 400;
+}
+
+.spectator-item {
+  display: inline;
+}
+
+.spectator-separator {
+  margin: 0 4px;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .victory-message {

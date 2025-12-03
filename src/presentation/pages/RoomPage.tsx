@@ -421,12 +421,19 @@ export function RoomPage({ onNavigate }: RoomPageProps) {
         </div>
 
         {/* 관전자 목록 */}
-        {room && room.spectators.length > 0 && (
+        {room && (
           <div className="spectators-info">
-            <span className="spectators-label">👁 관전자 ({room.spectators.length}/5):</span>
-            <span className="spectators-list">
-              {room.spectators.map(s => s.nickname).join(', ')}
-            </span>
+            <span className="spectators-label">👁 관전자 ({room.spectators.length}/5)</span>
+            {room.spectators.length > 0 && (
+              <span className="spectators-list">
+                {room.spectators.map((s, index) => (
+                  <span key={s.id} className="spectator-item">
+                    {index > 0 && <span className="spectator-separator">, </span>}
+                    {s.nickname}
+                  </span>
+                ))}
+              </span>
+            )}
           </div>
         )}
 
