@@ -1,0 +1,310 @@
+/* 통계 페이지 스타일 */
+.stats-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.stats-container {
+  width: 100%;
+  max-width: 800px;
+}
+
+.stats-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.stats-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: white;
+  margin: 0 0 8px 0;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.stats-subtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+}
+
+.back-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-bottom: 24px;
+  transition: all 0.2s ease;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* 로딩 상태 */
+.stats-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  color: white;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 에러 상태 */
+.stats-error {
+  text-align: center;
+  padding: 40px;
+  color: white;
+}
+
+.stats-error button {
+  margin-top: 16px;
+  padding: 10px 24px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* 빈 상태 */
+.stats-empty {
+  text-align: center;
+  padding: 60px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.1rem;
+}
+
+/* 랭킹 테이블 */
+.rankings-table {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.rankings-header {
+  display: grid;
+  grid-template-columns: 80px 1fr 180px 120px;
+  padding: 16px 20px;
+  background: rgba(0, 0, 0, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rankings-body {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.ranking-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 180px 120px;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.2s ease;
+  align-items: center;
+}
+
+.ranking-row:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ranking-row:last-child {
+  border-bottom: none;
+}
+
+.ranking-row.my-rank {
+  background: rgba(74, 144, 217, 0.3);
+}
+
+.ranking-row.my-rank:hover {
+  background: rgba(74, 144, 217, 0.4);
+}
+
+/* 순위 컬럼 */
+.col-rank {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: white;
+  text-align: center;
+}
+
+.col-rank.rank-gold {
+  font-size: 1.5rem;
+}
+
+.col-rank.rank-silver {
+  font-size: 1.4rem;
+}
+
+.col-rank.rank-bronze {
+  font-size: 1.3rem;
+}
+
+/* 닉네임 컬럼 */
+.col-nickname {
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.my-badge {
+  background: #4a90d9;
+  color: white;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* 전적 컬럼 */
+.col-record {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.record-total {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+}
+
+.record-detail {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.record-detail .win {
+  color: #68d391;
+}
+
+.record-detail .draw {
+  color: #fbd38d;
+}
+
+.record-detail .loss {
+  color: #fc8181;
+}
+
+/* 승률 컬럼 */
+.col-winrate {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.winrate-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #90cdf4;
+}
+
+.winrate-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.winrate-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4a90d9, #68d391);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+/* 스크롤바 */
+.rankings-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rankings-body::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.rankings-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+/* 반응형 */
+@media (max-width: 700px) {
+  .stats-page {
+    padding: 20px 16px;
+  }
+
+  .stats-title {
+    font-size: 2rem;
+  }
+
+  .rankings-header,
+  .ranking-row {
+    grid-template-columns: 50px 1fr 100px 80px;
+    padding: 12px 14px;
+    font-size: 12px;
+  }
+
+  .col-nickname {
+    font-size: 14px;
+  }
+
+  .record-total {
+    font-size: 12px;
+  }
+
+  .record-detail {
+    font-size: 10px;
+  }
+
+  .winrate-value {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 500px) {
+  .rankings-header,
+  .ranking-row {
+    grid-template-columns: 40px 1fr 80px;
+  }
+
+  .col-winrate {
+    display: none;
+  }
+
+  .rankings-header .col-winrate {
+    display: none;
+  }
+}
+

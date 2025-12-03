@@ -132,6 +132,39 @@ class UserRepository {
     const result = db.prepare('UPDATE users SET draws = draws + 1 WHERE nickname = ?').run(nickname);
     return result.changes > 0;
   }
+
+  // 전체 랭킹 조회 (승률 순, 같으면 전적 순)
+  getRankings(): Array<{ nickname: string; stats: GameStats; rank: number }> {
+    const db = getDatabase();
+    const users = db.prepare(`
+      SELECT nickname, wins, draws, losses,
+             (wins + draws + losses) as totalGames,
+             CASE WHEN (wins + draws + losses) > 0 
+                  THEN ROUND((wins * 100.0 / (wins + draws + losses)), 0)
+                  ELSE 0 END as winRate
+      FROM users
+      ORDER BY winRate DESC, totalGames DESC
+    `).all() as Array<{
+      nickname: string;
+      wins: number;
+      draws: number;
+      losses: number;
+      totalGames: number;
+      winRate: number;
+    }>;
+
+    return users.map((user, index) => ({
+      nickname: user.nickname,
+      stats: {
+        wins: user.wins,
+        draws: user.draws,
+        losses: user.losses,
+        totalGames: user.totalGames,
+        winRate: user.winRate,
+      },
+      rank: index + 1,
+    }));
+  }
 }
 
 export const userRepository = new UserRepository();

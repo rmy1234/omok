@@ -6,7 +6,7 @@ import { getStats } from '../../infrastructure/api/auth-api';
 import '../styles/Lobby.css';
 
 interface LobbyPageProps {
-  onNavigate: (page: 'home' | 'login' | 'signup' | 'game' | 'lobby' | 'room') => void;
+  onNavigate: (page: 'home' | 'login' | 'signup' | 'game' | 'lobby' | 'room' | 'stats') => void;
   onJoinRoom: (roomId: string) => void;
 }
 
@@ -148,8 +148,18 @@ export function LobbyPage({ onNavigate, onJoinRoom }: LobbyPageProps) {
       >
         <div className="lobby-header">
           <h1 className="lobby-title">게임 로비</h1>
-          <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
-            {isConnected ? '🟢 연결됨' : '🔴 연결 중...'}
+          <div className="lobby-header-right">
+            <motion.button
+              className="stats-nav-button"
+              onClick={() => onNavigate('stats')}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              🏆 랭킹
+            </motion.button>
+            <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
+              {isConnected ? '🟢 연결됨' : '🔴 연결 중...'}
+            </div>
           </div>
         </div>
 
@@ -162,17 +172,13 @@ export function LobbyPage({ onNavigate, onJoinRoom }: LobbyPageProps) {
             </div>
             {!isGuest && stats && (
               <div className="stats-row">
-                <div className="stat-item win">
-                  <span className="stat-label">승</span>
-                  <span className="stat-value">{stats.wins}</span>
-                </div>
-                <div className="stat-item draw">
-                  <span className="stat-label">무</span>
-                  <span className="stat-value">{stats.draws}</span>
-                </div>
-                <div className="stat-item loss">
-                  <span className="stat-label">패</span>
-                  <span className="stat-value">{stats.losses}</span>
+                <div className="stat-summary">
+                  <span className="stat-total">{stats.totalGames}전</span>
+                  <span className="stat-detail">
+                    <span className="stat-win">{stats.wins}승</span>
+                    <span className="stat-draw">{stats.draws}무</span>
+                    <span className="stat-loss">{stats.losses}패</span>
+                  </span>
                 </div>
                 <div className="stat-divider" />
                 <div className="stat-item winrate">

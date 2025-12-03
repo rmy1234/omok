@@ -73,3 +73,19 @@ export async function getStats(nickname: string): Promise<{ success: boolean; st
     return { success: false, error: '서버에 연결할 수 없습니다.' };
   }
 }
+
+export interface RankingEntry {
+  nickname: string;
+  stats: GameStats;
+  rank: number;
+}
+
+export async function getRankings(): Promise<{ success: boolean; rankings?: RankingEntry[]; error?: string }> {
+  try {
+    const response = await fetch(`${API_URL}/rankings`);
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return { success: false, error: '서버에 연결할 수 없습니다.' };
+  }
+}

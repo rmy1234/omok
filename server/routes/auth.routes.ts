@@ -105,5 +105,16 @@ router.get('/stats/:nickname', async (req: Request, res: Response) => {
   }
 });
 
+// 랭킹 조회
+router.get('/rankings', async (_req: Request, res: Response) => {
+  try {
+    const rankings = userRepository.getRankings();
+    res.json({ success: true, rankings });
+  } catch (error) {
+    console.error('랭킹 조회 오류:', error);
+    res.status(500).json({ success: false, error: '서버 오류가 발생했습니다.' });
+  }
+});
+
 export default router;
 

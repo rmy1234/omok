@@ -5,13 +5,14 @@ import { SignupPage } from './pages/SignupPage';
 import { GamePage } from './pages/GamePage';
 import { LobbyPage } from './pages/LobbyPage';
 import { RoomPage } from './pages/RoomPage';
+import { StatsPage } from './pages/StatsPage';
 import './styles/App.css';
 
-type Page = 'home' | 'login' | 'signup' | 'game' | 'lobby' | 'room';
+type Page = 'home' | 'login' | 'signup' | 'game' | 'lobby' | 'room' | 'stats';
 
 const getInitialPage = (): Page => {
   const savedPage = sessionStorage.getItem('currentPage') as Page | null;
-  if (savedPage && ['home', 'login', 'signup', 'game', 'lobby', 'room'].includes(savedPage)) {
+  if (savedPage && ['home', 'login', 'signup', 'game', 'lobby', 'room', 'stats'].includes(savedPage)) {
     return savedPage;
   }
   return 'home';
@@ -40,7 +41,7 @@ function App() {
 
   const handleNavigate = (page: Page) => {
     // 로비나 홈으로 이동 시 방 정보 초기화
-    if (page === 'home' || page === 'lobby') {
+    if (page === 'home' || page === 'lobby' || page === 'stats') {
       setCurrentRoomId(null);
     }
     setCurrentPage(page);
@@ -62,6 +63,8 @@ function App() {
       return <LobbyPage onNavigate={handleNavigate} onJoinRoom={handleJoinRoom} />;
     case 'room':
       return <RoomPage onNavigate={handleNavigate} />;
+    case 'stats':
+      return <StatsPage onNavigate={handleNavigate} />;
     case 'home':
     default:
       return <HomePage onNavigate={handleNavigate} />;
