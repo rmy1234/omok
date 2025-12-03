@@ -50,6 +50,7 @@ export interface ChatMessage {
   message: string;
   timestamp: number;
   isSystem?: boolean;
+  isSpectator?: boolean;
 }
 
 class SocketClient {

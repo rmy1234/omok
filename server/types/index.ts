@@ -44,6 +44,7 @@ export interface ChatMessage {
   message: string;
   timestamp: number;
   isSystem?: boolean;
+  isSpectator?: boolean;
 }
 
 // Socket.io 이벤트 타입

@@ -40,6 +40,9 @@ const RECONNECT_TIMEOUT = 30000; // 30초 대기
 const chatHistory: Map<string, ChatMessage[]> = new Map();
 const MAX_CHAT_HISTORY = 100; // 방당 최대 메시지 수
 
+// 소켓별 관전 상태 추적 (socketId -> isSpectating)
+const spectatorStatus: Map<string, boolean> = new Map();
+
 // 게임 종료 시 전적 기록 함수
 function recordGameResult(
   winner: 'black' | 'white',
@@ -92,6 +95,7 @@ io.on('connection', (socket) => {
     const room = roomManager.createRoom(roomName, { ...player, id: socket.id });
     currentRoomId = room.id;
     currentPlayer = { ...player, id: socket.id };
+    spectatorStatus.set(socket.id, false);
 
     // 방에 입장
     socket.join(room.id);
@@ -150,6 +154,7 @@ io.on('connection', (socket) => {
 
     currentRoomId = room.id;
     currentPlayer = { ...player, id: socket.id };
+    spectatorStatus.set(socket.id, false);
 
     // 방에 입장
     socket.join(room.id);
@@ -227,6 +232,7 @@ io.on('connection', (socket) => {
 
     currentRoomId = result.room.id;
     currentPlayer = { ...player, id: socket.id };
+    spectatorStatus.set(socket.id, false);
 
     // 방에 다시 입장
     socket.join(result.room.id);
@@ -259,9 +265,6 @@ io.on('connection', (socket) => {
     handleLeaveRoom(roomId);
   });
 
-  // 관전 모드 추적
-  let isSpectating = false;
-
   // 관전하기
   socket.on('spectateRoom', (roomId: string, player: Player) => {
     const result = roomManager.spectateRoom(roomId, { ...player, id: socket.id });
@@ -273,7 +276,7 @@ io.on('connection', (socket) => {
 
     currentRoomId = result.room.id;
     currentPlayer = { ...player, id: socket.id };
-    isSpectating = true;
+    spectatorStatus.set(socket.id, true);
 
     // 방에 입장
     socket.join(result.room.id);
@@ -306,7 +309,7 @@ io.on('connection', (socket) => {
     const room = roomManager.leaveSpectate(roomId, socket.id);
     
     socket.leave(roomId);
-    isSpectating = false;
+    spectatorStatus.set(socket.id, false);
 
     if (room) {
       socket.to(roomId).emit('spectatorLeft', socket.id);
@@ -384,11 +387,14 @@ io.on('connection', (socket) => {
   socket.on('sendMessage', (roomId: string, message: string) => {
     if (!currentPlayer || !message.trim()) return;
 
+    const isSpectating = spectatorStatus.get(socket.id) || false;
+
     const chatMessage: ChatMessage = {
       id: `${Date.now()}-${socket.id}`,
       sender: currentPlayer.nickname,
       message: message.trim(),
       timestamp: Date.now(),
+      isSpectator: isSpectating,
     };
 
     // 채팅 히스토리에 저장
@@ -412,6 +418,10 @@ io.on('connection', (socket) => {
   // 연결 해제
   socket.on('disconnect', () => {
     console.log(`클라이언트 연결 해제: ${socket.id}`);
+    
+    // 관전 상태 정리
+    const isSpectating = spectatorStatus.get(socket.id) || false;
+    spectatorStatus.delete(socket.id);
     
     // 관전자인 경우 바로 나가기
     if (isSpectating && currentRoomId) {

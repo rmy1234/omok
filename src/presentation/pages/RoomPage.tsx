@@ -598,8 +598,8 @@ export function RoomPage({ onNavigate }: RoomPageProps) {
             </div>
           </div>
 
-          {/* 채팅 박스 - 관전자는 채팅 사용 불가 */}
-          {room && currentUser && !isSpectating && (
+          {/* 채팅 박스 */}
+          {room && currentUser && (
             <ChatBox 
               roomId={room.id} 
               currentUserNickname={currentUser.nickname} 

@@ -341,6 +341,9 @@ export function ChatBox({ roomId, currentUserNickname }: ChatBoxProps) {
                     <div className="message-header">
                       <span className="message-sender">
                         {msg.sender === currentUserNickname ? '나' : msg.sender}
+                        {msg.isSpectator && (
+                          <span className="spectator-badge">(관전자)</span>
+                        )}
                       </span>
                       <span className="message-time">{formatTime(msg.timestamp)}</span>
                     </div>
