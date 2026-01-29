@@ -1,7 +1,10 @@
 import type { UserPublic } from '../../domain/entities/user';
 
-// 현재 접속 호스트 기반으로 API URL 동적 설정
-const getApiUrl = () => {
+// 배포 시 VITE_API_URL 사용, 없으면 현재 호스트:3001/api/auth (로컬/동일 도메인)
+const getApiUrl = (): string => {
+  if (typeof import.meta.env.VITE_API_URL === 'string' && import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
   const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
   return `http://${host}:3001/api/auth`;
 };

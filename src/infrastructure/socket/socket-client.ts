@@ -1,7 +1,10 @@
 import { io, Socket } from 'socket.io-client';
 
-// 현재 접속 호스트 기반으로 소켓 URL 동적 설정
-const getSocketUrl = () => {
+// 배포 시 VITE_SOCKET_URL 사용, 없으면 현재 호스트:3001 (로컬/동일 도메인)
+const getSocketUrl = (): string => {
+  if (typeof import.meta.env.VITE_SOCKET_URL === 'string' && import.meta.env.VITE_SOCKET_URL) {
+    return import.meta.env.VITE_SOCKET_URL;
+  }
   const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
   return `http://${host}:3001`;
 };
