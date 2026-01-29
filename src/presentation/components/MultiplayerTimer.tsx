@@ -17,7 +17,7 @@ export const MultiplayerTimer = ({
   className 
 }: MultiplayerTimerProps) => {
   const [timeRemaining, setTimeRemaining] = useState(TURN_TIME_LIMIT);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     // 기존 인터벌 정리
